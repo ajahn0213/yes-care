@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/adminApi';
+import { isBlackout } from '@/lib/settings';
 import { todayLA, addDays, dowOf, localParts, fmtTime, DOW_KO } from '@/lib/time';
 import BookingDrawer from './BookingDrawer';
 import { useToast } from './common';
@@ -29,7 +30,7 @@ export default function AdminCalendar() {
     (data?.bookings || []).forEach((b) => { const d = localParts(b.start).date; (m[d] = m[d] || []).push(b); });
     return m;
   }, [data]);
-  const off = (d) => settings && ((settings.weekly[dowOf(d)] || []).length === 0 || settings.blackouts.some((x) => x.date === d));
+  const off = (d) => settings && ((settings.weekly[dowOf(d)] || []).length === 0 || isBlackout(settings.blackouts, d));
   const [y, m] = month.split('-').map(Number);
 
   return (

@@ -120,12 +120,13 @@ export default function Settings() {
 
       {/* 휴무일 */}
       <section className="panel">
-        <div className="panel-h"><h2>신청 받지 않는 날</h2></div>
+        <div className="panel-h"><h2>신청 받지 않는 날 · 기간</h2></div>
         <div className="panel-b" style={{ display: 'grid', gap: 12 }}>
           <Blackout onAdd={(b) => set('blackouts', [...f.blackouts.filter((x) => x.date !== b.date), b].sort((a, c) => a.date.localeCompare(c.date)))} />
+          <p className="muted small">하루만 막으려면 시작 날짜만, 휴가·수련회처럼 여러 날이면 끝 날짜까지 넣으세요. 이미 확정된 심방은 그대로 남습니다.</p>
           <div className="chips">
             {f.blackouts.length === 0 && <span className="muted small">없음</span>}
-            {f.blackouts.map((b) => <span className="chip" key={b.date}>{fmtDateShort(b.date)}{b.note ? ' · ' + b.note : ''}<button aria-label="지우기" onClick={() => set('blackouts', f.blackouts.filter((x) => x.date !== b.date))}>×</button></span>)}
+            {f.blackouts.map((b) => <span className="chip" key={b.date}>{fmtDateShort(b.date)}{b.end ? ` – ${fmtDateShort(b.end)} (${Math.round((Date.parse(b.end) - Date.parse(b.date)) / 864e5) + 1}일)` : ''}{b.note ? ' · ' + b.note : ''}<button aria-label="지우기" onClick={() => set('blackouts', f.blackouts.filter((x) => x.date !== b.date))}>×</button></span>)}
           </div>
         </div>
       </section>
@@ -218,12 +219,15 @@ export default function Settings() {
 
 function Blackout({ onAdd }) {
   const [date, setDate] = useState('');
+  const [end, setEnd] = useState('');
   const [note, setNote] = useState('');
+  const bad = end && date && end < date;
   return (
-    <div className="row" style={{ maxWidth: 560 }}>
-      <label className="field">날짜<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+    <div className="row" style={{ maxWidth: 760 }}>
+      <label className="field">시작 날짜<input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></label>
+      <label className="field">끝 날짜<span className="opt">(여러 날일 때)</span><input type="date" value={end} min={date || undefined} onChange={(e) => setEnd(e.target.value)} />{bad && <span className="err">시작 날짜보다 뒤여야 해요</span>}</label>
       <label className="field">메모<span className="opt">(선택)</span><input value={note} onChange={(e) => setNote(e.target.value)} placeholder="예: 수련회, 휴가" maxLength={60} /></label>
-      <button className="btn small" style={{ flex: '0 0 auto', minHeight: 50 }} disabled={!date} onClick={() => { onAdd({ date, note }); setDate(''); setNote(''); }}>추가</button>
+      <button className="btn small" style={{ flex: '0 0 auto', minHeight: 50 }} disabled={!date || bad} onClick={() => { onAdd({ date, end: end && end > date ? end : '', note }); setDate(''); setEnd(''); setNote(''); }}>추가</button>
     </div>
   );
 }
